@@ -53,13 +53,12 @@ fn main() {
     let matches = App::from_yaml(yaml).get_matches();
 
     let config = matches.value_of("config").unwrap_or("/home/sam/default.conf");
-    let time = matches.value_of("time").unwrap_or("5");
+    let time = matches.value_of("time").unwrap_or("5").parse::<u64>().unwrap();
     let dir = matches.value_of("file").unwrap();
 
     println!("Config: {}, File {}, Time {}", config, dir, time);
 
-    let time_in_seconds: u64 = time.parse().unwrap();
 
     let rules = parse_rules(config.to_string()).expect("error reading config file");
-    watch_files(rules, time_in_seconds, dir.to_string());
+    watch_files(rules, time, dir.to_string());
 }
