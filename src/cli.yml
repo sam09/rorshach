@@ -1,0 +1,25 @@
+name: rorshach
+version: "1.0"
+author: Sam Radhakrishnan <sk09idm@gmail.com>
+about: A watchmen for your directories.
+args:
+    - config:
+        short: c
+        long: config
+        value_name: CONFIG
+        help: Sets a custom config file
+        takes_value: true
+    - time:
+        help: Sets the time period to reload
+        long: time
+        short: -t
+    - file:
+        help: Filepath of the dir/ file to watch
+        long: file
+        short: f
+        value_name: FILE
+        required: true
+    - verbose:
+        short: v
+        multiple: true
+        help: Sets the level of verbosity
