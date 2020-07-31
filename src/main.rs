@@ -5,38 +5,19 @@ extern crate shellexpand;
 use clap::{App};
 use std::fs::File;
 use std::io::{self};
-use std::fmt;
 use std::path::PathBuf;
 use std::process::Command;
-use serde::Deserialize;
 use std::time::Duration;
-extern crate strum;
 use hotwatch::{
     blocking::{Flow, Hotwatch},
     Event as FileEvent};
 use regex::Regex;
 
-
-#[derive(Debug, Deserialize, EnumString, Display)]
-enum Event {
-    CREATE,
-    MODIFY,
-    DELETE
-}
-
-#[derive(Debug, Deserialize)]
-struct Rule {
-    event: Event,
-    file_pattern: String,
-    cmd: String,
-}
+mod rorshach;
+use crate::rorshach::event::Event;
+use crate::rorshach::rule::Rule;
 
 
-impl fmt::Display for Rule {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} {} {}", self.event, self.file_pattern, self.cmd)
-    }
-}
 
 fn parse_rules(config_path: &str) -> Result<(Vec<Rule>, Vec<Rule>, Vec<Rule>), io::Error> {
     let file = File::open(config_path)?;
@@ -48,7 +29,7 @@ fn parse_rules(config_path: &str) -> Result<(Vec<Rule>, Vec<Rule>, Vec<Rule>), i
 
     for record in csv_file.deserialize() {
         let rule: Rule = record?;
-        match rule.event {
+        match rule.get_event() {
             Event::CREATE => create_rules.push(rule),
             Event::MODIFY => modify_rules.push(rule),
             Event::DELETE => remove_rules.push(rule),
@@ -61,14 +42,15 @@ fn parse_rules(config_path: &str) -> Result<(Vec<Rule>, Vec<Rule>, Vec<Rule>), i
 
 fn exec_rule(path: &PathBuf, rule: &Rule) -> Result < (), regex::Error> {
     let path_str = path.to_string_lossy().to_string();
-    let re = Regex::new(&regex::escape(&rule.file_pattern))?;
-    if re.is_match(&rule.file_pattern) {
+    let re_str = format!("^{}$", rule.get_file_pattern());
+    let re = Regex::new(&re_str)?;
+    if re.is_match(&path_str) {
         Command::new("sh")
-        .arg("-c")
-        .arg(&rule.cmd)
-        .env("FULLPATH", &path_str)
-        .spawn()
-        .expect("Failed to run command");
+            .arg("-c")
+            .arg(rule.get_cmd())
+            .env("FULLPATH", &path_str)
+            .spawn()
+            .expect("Failed to run command");
     }
     Ok(())
 }
@@ -76,7 +58,7 @@ fn exec_rule(path: &PathBuf, rule: &Rule) -> Result < (), regex::Error> {
 fn filter_and_exec_rules(path: &PathBuf, rules: &Vec<Rule> ) {
     for rule in rules {
         if let Err(e) = exec_rule(path, rule) {
-            println!("Failed to execute {} on file {:?}. Error {:?}", &rule.cmd, &path, e);
+            println!("Failed to execute {} on file {:?}. Error {:?}", rule.get_cmd(), &path, e);
         }
     }
 }
@@ -95,6 +77,7 @@ fn main() {
     hotwatch.watch(dir, move |event: FileEvent| {
         match event {
             FileEvent::Create(path) => {
+                println!("File {:?} created", path);
                 filter_and_exec_rules(&path, &create_rules);
             },
             FileEvent::Write(path) => {
