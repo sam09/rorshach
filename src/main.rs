@@ -40,7 +40,7 @@ fn parse_rules(config_path: &str) -> Result<(Vec<Rule>, Vec<Rule>, Vec<Rule>), i
 }
 
 
-fn exec_rule(path: &PathBuf, rule: &Rule) -> Result < (), regex::Error> {
+fn exec_rule(path: &PathBuf, rule: &Rule, dir: &str) -> Result < (), regex::Error> {
     let path_str = path.to_string_lossy().to_string();
     let re_str = format!("^{}$", rule.get_file_pattern());
     let re = Regex::new(&re_str)?;
@@ -49,15 +49,16 @@ fn exec_rule(path: &PathBuf, rule: &Rule) -> Result < (), regex::Error> {
             .arg("-c")
             .arg(rule.get_cmd())
             .env("FULLPATH", &path_str)
+            .env("BASEDIR", &dir)
             .spawn()
             .expect("Failed to run command");
     }
     Ok(())
 }
 
-fn filter_and_exec_rules(path: &PathBuf, rules: &Vec<Rule> ) {
+fn filter_and_exec_rules(path: &PathBuf, rules: &Vec<Rule>, dir: &str) {
     for rule in rules {
-        if let Err(e) = exec_rule(path, rule) {
+        if let Err(e) = exec_rule(path, rule, &dir) {
             println!("Failed to execute {} on file {:?}. Error {:?}", rule.get_cmd(), &path, e);
         }
     }
@@ -72,26 +73,26 @@ fn main() {
     let dir = matches.value_of("file").unwrap();
     let duration = Duration::new(time, 0);
     let (create_rules, remove_rules, modify_rules) = parse_rules(config).expect("error reading config file");
-
+    let dir_string = dir.to_string();
     let mut hotwatch = Hotwatch::new_with_custom_delay(duration).expect("Error occured created watcher");
-    hotwatch.watch(dir, move |event: FileEvent| {
+    hotwatch.watch(&dir, move |event| {
         match event {
             FileEvent::Create(path) => {
                 println!("File {:?} created", path);
-                filter_and_exec_rules(&path, &create_rules);
+                filter_and_exec_rules(&path, &create_rules, &dir_string);
             },
             FileEvent::Write(path) => {
                 println!("File {:?} changed", path);
-                filter_and_exec_rules(&path, &modify_rules);
+                filter_and_exec_rules(&path, &modify_rules, &dir_string);
             },
             FileEvent::Rename(oldpath, newpath) => {
-                filter_and_exec_rules(&oldpath, &remove_rules);
-                filter_and_exec_rules(&newpath, &create_rules);
+                filter_and_exec_rules(&oldpath, &remove_rules, &dir_string);
+                filter_and_exec_rules(&newpath, &create_rules, &dir_string);
                 println!("{} renamed to {}", oldpath.display(), newpath.display());
             },
             FileEvent::Remove(path) => {
                 println!("File {:?} deleted", path);
-                filter_and_exec_rules(&path, &remove_rules);
+                filter_and_exec_rules(&path, &remove_rules, &dir_string);
             },
             _ => (),
         };
