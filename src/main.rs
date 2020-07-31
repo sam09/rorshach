@@ -81,6 +81,7 @@ fn main() {
                 filter_and_exec_rules(&path, &create_rules);
             },
             FileEvent::Write(path) => {
+                println!("File {:?} changed", path);
                 filter_and_exec_rules(&path, &modify_rules);
             },
             FileEvent::Rename(oldpath, newpath) => {
@@ -89,17 +90,10 @@ fn main() {
                 println!("{} renamed to {}", oldpath.display(), newpath.display());
             },
             FileEvent::Remove(path) => {
+                println!("File {:?} deleted", path);
                 filter_and_exec_rules(&path, &remove_rules);
             },
-            FileEvent::NoticeWrite(path) => {
-                println!("File {:?} changed", path);
-            },
-            FileEvent::NoticeRemove(path) => {
-                println!("File {:?} deleted", path);
-            },
-            _ => {
-                println!("Discarding events not tracked by rorshach!");
-            }
+            _ => (),
         };
         Flow::Continue
     }).expect("Error initialising file");
