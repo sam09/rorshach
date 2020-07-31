@@ -3,10 +3,15 @@ extern crate clap;
 extern crate csv;
 use clap::{App};
 use std::fs::File;
+use std::path::Path;
 use std::io::{self};
 use std::fmt;
 use serde::Deserialize;
+use std::time::Duration;
 extern crate strum;
+use hotwatch::{
+    blocking::{Flow, Hotwatch},
+    Event as FileEvent};
 #[macro_use] extern crate strum_macros;
 
 
@@ -43,22 +48,44 @@ fn parse_rules(config_path: String) -> Result<Vec<Rule>, io::Error> {
     Ok(rules)
 }
 
-
-fn watch_files(rules: Vec<Rule>, time_in_seconds: u64, dir: String) -> Result<(), io::Error> {
-    unimplemented!();
-}
-
 fn main() {
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
 
     let config = matches.value_of("config").unwrap_or("/home/sam/default.conf");
-    let time = matches.value_of("time").unwrap_or("5").parse::<u64>().unwrap();
+    let time = matches.value_of("time").unwrap_or("1").parse::<u64>().unwrap();
     let dir = matches.value_of("file").unwrap();
-
-    println!("Config: {}, File {}, Time {}", config, dir, time);
-
-
+    let duration = Duration::new(time, 0);
+    let path = Path::new(dir);
     let rules = parse_rules(config.to_string()).expect("error reading config file");
-    watch_files(rules, time, dir.to_string());
+
+    let mut hotwatch = Hotwatch::new_with_custom_delay(duration).expect("Error occured created watcher");
+    hotwatch.watch(dir, move |event: FileEvent| {
+        match event {
+            FileEvent::Create(path) => {
+                println!("File {:?} created some time ago", path);
+            },
+            FileEvent::Write(path) => {
+                println!("File {:?} changed some time ago", path);
+            },
+            FileEvent::Rename(oldpath, newpath) => {
+                println!("File renamed {:?} to {:?}", oldpath, newpath);
+            },
+            FileEvent::Remove(path) => {
+                println!("File {:?} deleted some time ago", path);
+            },
+            FileEvent::NoticeWrite(path) => {
+                println!("File {:?} changed", path);
+            },
+            FileEvent::NoticeRemove(path) => {
+                println!("File {:?} deleted", path);
+            },
+            _ => {
+                println!("Discarding events not tracked by rorshach!");
+            }
+        };
+        Flow::Continue
+    }).expect("Error initialising file");
+
+    hotwatch.run();
 }
