@@ -40,3 +40,12 @@ MODIFY  *.cpp   g++ ${FULLPATH} {BASEDIR}/test
 ```
 
 Whenver a change is detected in a c++ file, `rorshach` will compile that file and create an executable named `test` in the base directory
+
+
+### TODO
+- [ ] Add more events to listen like `Rename`
+- [ ] Support execution of a chain of commands for a single event
+- [ ] Move Command Line passing to a different struct
+- [ ] Add a threadpool to execute each task once an event is spawned
+- [ ] Add Tests?
+- [x] Move parse_rules to an enclosing struct
