@@ -3,8 +3,6 @@
 extern crate csv;
 extern crate shellexpand;
 use clap::{App};
-use std::fs::File;
-use std::io::{self};
 use std::path::PathBuf;
 use std::process::Command;
 use std::time::Duration;
@@ -14,30 +12,8 @@ use hotwatch::{
 use regex::Regex;
 
 mod rorshach;
-use crate::rorshach::event::Event;
 use crate::rorshach::rule::Rule;
-
-
-
-fn parse_rules(config_path: &str) -> Result<(Vec<Rule>, Vec<Rule>, Vec<Rule>), io::Error> {
-    let file = File::open(config_path)?;
-    let mut csv_file = csv::ReaderBuilder::new().has_headers(false).delimiter(b'\t').from_reader(file);
-
-    let mut create_rules: Vec<Rule> = Vec::new();
-    let mut remove_rules: Vec<Rule> = Vec::new();
-    let mut modify_rules: Vec<Rule> = Vec::new();
-
-    for record in csv_file.deserialize() {
-        let rule: Rule = record?;
-        match rule.get_event() {
-            Event::CREATE => create_rules.push(rule),
-            Event::MODIFY => modify_rules.push(rule),
-            Event::DELETE => remove_rules.push(rule),
-        }
-    }
-
-    Ok((create_rules, remove_rules, modify_rules))
-}
+use crate::rorshach::rule_parser::RuleParser;
 
 
 fn exec_rule(path: &PathBuf, rule: &Rule, dir: &str) -> Result < (), regex::Error> {
@@ -72,27 +48,28 @@ fn main() {
     let time = matches.value_of("time").unwrap_or("1").parse::<u64>().unwrap();
     let dir = matches.value_of("file").unwrap();
     let duration = Duration::new(time, 0);
-    let (create_rules, remove_rules, modify_rules) = parse_rules(config).expect("error reading config file");
+    let mut rules = RuleParser::new();
+    rules.parse_rules(config).expect("error reading config file");
     let dir_string = dir.to_string();
     let mut hotwatch = Hotwatch::new_with_custom_delay(duration).expect("Error occured created watcher");
     hotwatch.watch(&dir, move |event| {
         match event {
             FileEvent::Create(path) => {
-                println!("File {:?} created", path);
-                filter_and_exec_rules(&path, &create_rules, &dir_string);
+                println!("File {} created", path.display());
+                filter_and_exec_rules(&path, rules.get_create_rules(), &dir_string);
             },
             FileEvent::Write(path) => {
-                println!("File {:?} changed", path);
-                filter_and_exec_rules(&path, &modify_rules, &dir_string);
+                println!("File {} changed", path.display());
+                filter_and_exec_rules(&path, rules.get_modify_rules(), &dir_string);
             },
             FileEvent::Rename(oldpath, newpath) => {
-                filter_and_exec_rules(&oldpath, &remove_rules, &dir_string);
-                filter_and_exec_rules(&newpath, &create_rules, &dir_string);
+                filter_and_exec_rules(&oldpath, rules.get_remove_rules(), &dir_string);
+                filter_and_exec_rules(&newpath, rules.get_create_rules(), &dir_string);
                 println!("{} renamed to {}", oldpath.display(), newpath.display());
             },
             FileEvent::Remove(path) => {
-                println!("File {:?} deleted", path);
-                filter_and_exec_rules(&path, &remove_rules, &dir_string);
+                println!("File {} deleted", path.display());
+                filter_and_exec_rules(&path, rules.get_remove_rules(), &dir_string);
             },
             _ => (),
         };
