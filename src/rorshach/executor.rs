@@ -1,71 +1,58 @@
-use std::process::Command;
-use crate::rorshach::rule::Rule;
+use crate::rorshach::event::Event;
+use crate::rorshach::event_type::EventType;
 use crate::rorshach::rule_parser::RuleParser;
-use std::path::PathBuf;
+use crate::rorshach::producer::Producer;
+use crate::rorshach::consumer::Consumer;
 use hotwatch::Event as FileEvent;
-use regex::Regex;
 extern crate log;
-use log::{info, warn, error};
-
+use log::info;
+use crossbeam::thread;
+extern crate pub_sub;
 
 pub struct Executor {
-    dir: String,
-    rules: RuleParser,
+    producer: Producer,
+    consumers: Vec<Consumer>,
 }
 
 impl Executor {
+
     pub fn new(dir: String, rules: RuleParser) -> Self {
-        Executor{dir: dir, rules: rules}
-    }
-
-    fn exec_rule(&self, path: &PathBuf, rule: &Rule) -> Result < (), regex::Error> {
-        let path_str = path.to_string_lossy().to_string();
-        let re_str = format!("^{}$", rule.get_file_pattern());
-        let re = Regex::new(&re_str)?;
-        if re.is_match(&path_str) {
-            match Command::new("sh")
-                .arg("-c")
-                .arg(rule.get_cmd())
-                .env("FULLPATH", &path_str)
-                .env("BASEDIR", &self.dir)
-                .spawn() {
-                Err(e) => {
-                    error!("Spawning command {} on {} failed: {}", rule.get_cmd(), path.display(), e);
-                },
-                _ => (),
-            }
+        let channel = pub_sub::PubSub::new();
+        let producer = Producer::new(channel.clone());
+        let mut consumers = Vec::<Consumer>::new();
+        for rule in rules.get_rules() {
+            consumers.push(Consumer::new(channel.subscribe().clone(), rule, dir.clone()))
         }
-        Ok(())
+        Executor{producer: producer, consumers: consumers}
     }
 
-    fn filter_and_exec_rules(&self, path: &PathBuf, rules: &Vec<Rule>) {
-        for rule in rules {
-            if let Err(e) = self.exec_rule(path, rule) {
-                warn!("Failed to execute {} on file {:?}. Error {:?}", rule.get_cmd(), &path, e);
-            }
-        }
-    }
-
-    pub fn run(&self, event: &FileEvent) {
-        match event {
+    pub fn run(&self, file_event: &FileEvent) {
+        match file_event {
             FileEvent::Create(path) => {
                 info!("File {} created", path.display());
-                self.filter_and_exec_rules(&path, &self.rules.get_create_rules());
+                self.producer.send(Event::new(EventType::CREATE, path.to_path_buf()));
             },
             FileEvent::Write(path) => {
                 info!("File {} changed", path.display());
-                self.filter_and_exec_rules(&path, &self.rules.get_modify_rules());
+                self.producer.send(Event::new(EventType::MODIFY, path.to_path_buf()));
             },
-            FileEvent::Rename(oldpath, newpath) => {
-                self.filter_and_exec_rules(&oldpath, &self.rules.get_remove_rules());
-                self.filter_and_exec_rules(&newpath, &self.rules.get_create_rules());
-                info!("{} renamed to {}", oldpath.display(), newpath.display());
+            FileEvent::Rename(old_path, new_path) => {
+                self.producer.send(Event::new(EventType::DELETE, old_path.to_path_buf()));
+                self.producer.send(Event::new(EventType::MODIFY, new_path.to_path_buf()));
+                info!("{} renamed to {}", old_path.display(), new_path.display());
             },
             FileEvent::Remove(path) => {
+                self.producer.send(Event::new(EventType::DELETE, path.to_path_buf()));
                 info!("File {} deleted", path.display());
-                self.filter_and_exec_rules(&path, &self.rules.get_remove_rules());
             },
-            _ => (),
+            _ => return,
         };
+        self.start_consumers();
+    }
+
+    pub fn start_consumers(&self) {
+        for consumer in &self.consumers {
+            consumer.consume();
+        }
     }
 }

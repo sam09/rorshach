@@ -14,7 +14,6 @@ mod rorshach;
 use crate::rorshach::rule_parser::RuleParser;
 use crate::rorshach::executor::Executor;
 
-
 fn main() {
     simple_logger::init_with_level(log::Level::Info).unwrap();
     let yaml = load_yaml!("cli.yml");
@@ -31,8 +30,8 @@ fn main() {
             std::process::exit(1);
         },
         _ => (),
-
     }
+
     let dir_string = dir.to_string();
     let mut hotwatch = match Hotwatch::new_with_custom_delay(duration) {
         Err(e) => {
@@ -45,6 +44,7 @@ fn main() {
     };
 
     let executor = Executor::new(dir_string, rules);
+
     match hotwatch.watch(&dir, move |event| {
         executor.run(&event);
         Flow::Continue

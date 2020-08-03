@@ -1,8 +1,14 @@
 pub use self::rule::Rule;
 pub use self::event::Event;
+pub use self::event_type::EventType;
+pub use self::producer::Producer;
+pub use self::consumer::Consumer;
 pub use self::rule_parser::RuleParser;
 pub use self::executor::Executor;
 pub mod rule;
 pub mod event;
+pub mod event_type;
 pub mod rule_parser;
 pub mod executor;
+pub mod producer;
+pub mod consumer;
