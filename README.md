@@ -51,6 +51,7 @@ Whenver a change is detected in a c++ file, `rorshach` will compile that file an
 - [ ] Support execution of a chain of commands for a single event
 - [ ] Move Command Line passing to a different struct
 - [ ] Add a threadpool to execute each task once an event is spawned
+- [x] Add a pub-sub mechanism for events
 - [ ] Add Tests?
 - [x] Move parse_rules to an enclosing struct
 - [x] Use `log` create for logging.
