@@ -12,6 +12,7 @@ args:
     - time:
         help: Sets the time period to reload
         long: time
+        value_name: TIME
         short: -t
     - file:
         help: Filepath of the dir/ file to watch
