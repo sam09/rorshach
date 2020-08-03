@@ -7,7 +7,7 @@ use std::io;
 pub struct RuleParser {
     create_rules: Vec<Rule>,
     remove_rules: Vec<Rule>,
-    modify_rules: Vec<Rule>
+    modify_rules: Vec<Rule>,
 }
 
 

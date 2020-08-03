@@ -10,7 +10,7 @@ use log::{info, warn, error};
 
 pub struct Executor {
     dir: String,
-    rules: RuleParser
+    rules: RuleParser,
 }
 
 impl Executor {

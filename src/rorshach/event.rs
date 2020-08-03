@@ -5,5 +5,5 @@ use serde::Deserialize;
 pub enum Event {
     CREATE,
     MODIFY,
-    DELETE
+    DELETE,
 }
