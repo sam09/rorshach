@@ -1,3 +1,6 @@
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
 # Rorshach
 A watchman for your directories. Rorshach allows you to watch your directories for changes and trigger certain commands when these events occur.
 
