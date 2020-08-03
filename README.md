@@ -49,3 +49,5 @@ Whenver a change is detected in a c++ file, `rorshach` will compile that file an
 - [ ] Add a threadpool to execute each task once an event is spawned
 - [ ] Add Tests?
 - [x] Move parse_rules to an enclosing struct
+- [ ] Use `log` create for logging.
+- [ ] Provide better messages for errors.
