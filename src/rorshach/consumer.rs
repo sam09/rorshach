@@ -18,30 +18,37 @@ impl Consumer {
     }
 
     fn exec_rule(&self, event: Event) {
-        let path_str = match event.get_old_path() {
+        let old_path_str = match event.get_old_path() {
             Some(path) => path.to_string_lossy().to_string(),
             None => {
                 error!("No path found for event: {}", &event);
                 return;
             }
         };
+
+        let new_path_str = match event.get_new_path() {
+            Some(path) => path.to_string_lossy().to_string(),
+            None => "".to_string(),
+        };
+
         let re_str = format!("^{}$", self.rule.get_file_pattern());
         let re = match Regex::new(&re_str) {
             Err(err) => {
-                error!("Ill formed pattern found {}: {}", path_str, err);
+                error!("Ill formed pattern found {}: {}", old_path_str, err);
                 return;
             }
             Ok(re) => re,
         };
-        if re.is_match(&path_str) {
+        if re.is_match(&old_path_str) {
             match Command::new("sh")
                 .arg("-c")
                 .arg(self.rule.get_cmd())
-                .env("FULLPATH", &path_str)
+                .env("FULLPATH", &old_path_str)
+                .env("NEWFULLPATH", &new_path_str)
                 .env("BASEDIR", &self.dir)
                 .spawn() {
                     Err(e) => {
-                        error!("Spawning command {} on {} failed: {}", self.rule.get_cmd(), &path_str, e);
+                        error!("Spawning command {} on {} failed: {}", self.rule.get_cmd(), &old_path_str, e);
                     },
                     _ => (),
                 }

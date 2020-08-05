@@ -34,7 +34,7 @@ impl Executor {
             },
             FileEvent::Write(path) => {
                 info!("File {} changed", path.display());
-                self.producer.send(Event::new(EventType::DELETE, Some(path.to_path_buf()), None));
+                self.producer.send(Event::new(EventType::MODIFY, Some(path.to_path_buf()), None));
             },
             FileEvent::Rename(old_path, new_path) => {
                 self.producer.send(
