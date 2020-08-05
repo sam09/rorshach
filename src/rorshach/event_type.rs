@@ -6,4 +6,6 @@ pub enum EventType {
     CREATE,
     MODIFY,
     DELETE,
+    RENAME,
+    UNSUPPORTED,
 }

@@ -6,8 +6,8 @@ use crate::rorshach::consumer::Consumer;
 use hotwatch::Event as FileEvent;
 extern crate log;
 use log::info;
-use crossbeam::thread;
 extern crate pub_sub;
+use futures::{ join, executor::block_on};
 
 pub struct Executor {
     producer: Producer,
@@ -26,33 +26,41 @@ impl Executor {
         Executor{producer: producer, consumers: consumers}
     }
 
-    pub fn run(&self, file_event: &FileEvent) {
+    async fn produce(&self, file_event: &FileEvent) {
         match file_event {
             FileEvent::Create(path) => {
                 info!("File {} created", path.display());
-                self.producer.send(Event::new(EventType::CREATE, path.to_path_buf()));
+                self.producer.send(Event::new(EventType::CREATE, Some(path.to_path_buf()), None));
             },
             FileEvent::Write(path) => {
                 info!("File {} changed", path.display());
-                self.producer.send(Event::new(EventType::MODIFY, path.to_path_buf()));
+                self.producer.send(Event::new(EventType::DELETE, Some(path.to_path_buf()), None));
             },
             FileEvent::Rename(old_path, new_path) => {
-                self.producer.send(Event::new(EventType::DELETE, old_path.to_path_buf()));
-                self.producer.send(Event::new(EventType::MODIFY, new_path.to_path_buf()));
+                self.producer.send(
+                    Event::new(EventType::RENAME, Some(old_path.to_path_buf()),Some(new_path.to_path_buf()))
+                );
                 info!("{} renamed to {}", old_path.display(), new_path.display());
             },
             FileEvent::Remove(path) => {
-                self.producer.send(Event::new(EventType::DELETE, path.to_path_buf()));
+                self.producer.send(Event::new(EventType::DELETE, Some(path.to_path_buf()), None));
                 info!("File {} deleted", path.display());
             },
-            _ => return,
+            _ => self.producer.send(Event::new(EventType::UNSUPPORTED, None, None)),
         };
-        self.start_consumers();
     }
 
-    pub fn start_consumers(&self) {
+    async fn start_consumers(&self) {
         for consumer in &self.consumers {
-            consumer.consume();
+            consumer.consume().await;
         }
+    }
+
+    async fn async_run(&self, file_event: &FileEvent) {
+        join!(self.produce(file_event), self.start_consumers());
+    }
+
+    pub fn run(&self, file_event: &FileEvent) {
+        block_on(self.async_run(file_event))
     }
 }
