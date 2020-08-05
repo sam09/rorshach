@@ -22,13 +22,15 @@ EVENT  PATTERN   ACTION
 
 ```
 
-`EVENTS` can be `CREATE`, `DELETE` or `MODIFY`
+`EVENTS` can be `CREATE`, `DELETE` `RENAME` or `MODIFY`. Each event is trigger when a file in the directory being watched is CREATED, DELETED, MODIFIED or RENAMED respectively.
 `PATTERNS` are patterns to match the files in a directory. Example `*.cpp` matches all the C++ files in a directory.
 `ACTIONS` are commands that can be executed when a `EVENT` occures
 
-There are two environment variable available while executing an action, they are :- 
+There are following environment variable available while executing an action, they are :- 
 `{FULLPATH}` - Full path to the file,
 `{BASEDIR}` - Path to the directory that rorshach is watching
+`{NEWFULLPATH}` - New Path to the file, when a file is renamed else empty.
+
 
 ### Examples
 
@@ -47,12 +49,13 @@ Whenver a change is detected in a c++ file, `rorshach` will compile that file an
 
 
 ### TODO
-- [ ] Add more events to listen like `Rename`
+- [x] Add more events to listen like `Rename`
 - [ ] Support execution of a chain of commands for a single event
 - [ ] Move Command Line passing to a different struct
-- [ ] Add a threadpool to execute each task once an event is spawned
+- [ ] ~Add a threadpool to execute each task once an event is spawned~
 - [x] Add a pub-sub mechanism for events
 - [ ] Add Tests?
 - [x] Move parse_rules to an enclosing struct
 - [x] Use `log` create for logging.
 - [x] Provide better messages for errors.
+- [x] Add a pub sub mechanism to listening to events and consuming them
