@@ -2,7 +2,7 @@
 
 cargo build
 output="test/integration/output"
-golden="test/integration/golden"
+golden="test/integration/golden.output"
 rm $output
 touch $output
 bin_path="./target/debug/rorshach"
