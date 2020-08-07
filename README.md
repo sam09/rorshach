@@ -5,6 +5,11 @@
 # Rorshach
 A watchman for your directories. Rorshach allows you to watch your directories for changes and trigger certain commands when these events occur.
 
+### Installlation
+
+At the moment the only way to install is from crates.io (https://crates.io/crates/rorshach).
+Run `cargo install rorshach`  to install it on a linux machine.
+
 ### Usage
 
 * `./rorshach -f <dir> [-config <config_path>] [-t <seconds_to_wait_before_reload>]`
