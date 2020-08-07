@@ -5,7 +5,7 @@ authors = ["Sam Radhakrishnan <sk09idm@gmail.com>"]
 edition = "2018"
 description = "A wacthman for directories"
 license = "MIT"
-keywords = ["watcher", "file-io", "file-watcher", "inotify", "utility-tools", "watchdog"]
+keywords = ["file-io", "file-watcher", "inotify", "utility-tools", "watchdog"]
 categories = ["command-line-utilities", "filesystem"]
 
 [dependencies]
