@@ -1,7 +1,0 @@
-CREATED /home/sam/code/rorshach/test/integration/test_data/new
-DELETED /home/sam/code/rorshach/test/integration/test_data/new
-CREATED /home/sam/code/rorshach/test/integration/test_data/test
-DELETED /home/sam/code/rorshach/test/integration/test_data/test
-RENAMED /home/sam/code/rorshach/test/integration/test_data/test.cpp /home/sam/code/rorshach/test/integration/test_data/temp.cpp
-CREATED /home/sam/code/rorshach/test/integration/test_data/test.cpp
-DELETED /home/sam/code/rorshach/test/integration/test_data/temp.cpp
