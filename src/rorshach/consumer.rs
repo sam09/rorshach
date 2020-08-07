@@ -14,7 +14,7 @@ pub struct Consumer {
 impl Consumer {
 
     pub fn new(receiver: Subscription<Event>, rule: &Rule, dir: String) -> Self {
-        Consumer{ receiver: receiver, rule: rule.clone(), dir: dir}
+        Consumer{ receiver, rule: rule.clone(), dir}
     }
 
     fn exec_rule(&self, event: Event) {
@@ -40,17 +40,14 @@ impl Consumer {
             Ok(re) => re,
         };
         if re.is_match(&old_path_str) {
-            match Command::new("sh")
+            if let Err(e) = Command::new("sh")
                 .arg("-c")
                 .arg(self.rule.get_cmd())
                 .env("FULLPATH", &old_path_str)
                 .env("NEWFULLPATH", &new_path_str)
                 .env("BASEDIR", &self.dir)
                 .spawn() {
-                    Err(e) => {
-                        error!("Spawning command {} on {} failed: {}", self.rule.get_cmd(), &old_path_str, e);
-                    },
-                    _ => (),
+                    error!("Spawning command {} on {} failed: {}", self.rule.get_cmd(), &old_path_str, e);
                 }
         }
     }

@@ -9,7 +9,7 @@ pub struct Producer {
 impl Producer {
 
     pub fn new(sender: PubSub<Event> ) -> Self {
-        Producer{ sender: sender}
+        Producer{ sender}
     }
 
     pub fn send(&self, event: Event) {

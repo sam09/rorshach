@@ -24,12 +24,9 @@ fn main() {
     let dir = matches.value_of("file").unwrap();
     let duration = Duration::new(time, 0);
     let mut rules = RuleParser::new();
-    match rules.parse_rules(config) {
-        Err(e) => {
-            error!("Error occurred parsing rules {}", e);
-            std::process::exit(1);
-        },
-        _ => (),
+    if let Err(e) = rules.parse_rules(config) {
+        error!("Error occurred parsing rules {}", e);
+        std::process::exit(1);
     }
 
     let dir_string = dir.to_string();
@@ -45,15 +42,12 @@ fn main() {
 
     let executor = Executor::new(dir_string, rules);
 
-    match hotwatch.watch(&dir, move |event| {
+    if let Err(e) = hotwatch.watch(&dir, move |event| {
         executor.run(&event);
         Flow::Continue
     }) {
-        Err(e) => {
-            error!("Error initalising file watcher for {}: {}", dir, e);
-            std::process::exit(1);
-        },
-        _ => (),
+        error!("Error initalising file watcher for {}: {}", dir, e);
+        std::process::exit(1);
     }
 
     hotwatch.run();

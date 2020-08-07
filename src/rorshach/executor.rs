@@ -23,7 +23,7 @@ impl Executor {
         for rule in rules.get_rules() {
             consumers.push(Consumer::new(channel.subscribe().clone(), rule, dir.clone()))
         }
-        Executor{producer: producer, consumers: consumers}
+        Executor{producer, consumers}
     }
 
     async fn produce(&self, file_event: &FileEvent) {
