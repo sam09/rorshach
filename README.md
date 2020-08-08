@@ -2,7 +2,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 ![Build](https://github.com/sam09/rorshach/workflows/Build/badge.svg)
 
-# Rorshach
+# Rorshach ![rorschach.gif](http://www.gomotes.com/emoticon/rorschach.gif)
+
 A watchman for your directories. Rorshach allows you to watch your directories for changes and trigger certain commands when these events occur.
 
 ### Installlation
