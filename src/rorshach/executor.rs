@@ -7,7 +7,7 @@ use hotwatch::Event as FileEvent;
 extern crate log;
 use log::info;
 extern crate pub_sub;
-use futures::{ join, executor::block_on};
+use futures::{join, future::join_all, executor::block_on};
 
 pub struct Executor {
     producer: Producer,
@@ -51,9 +51,11 @@ impl Executor {
     }
 
     async fn start_consumers(&self) {
+        let mut v = Vec::new();
         for consumer in &self.consumers {
-            consumer.consume().await;
+            v.push(consumer.consume());
         }
+        join_all(v).await;
     }
 
     async fn async_run(&self, file_event: &FileEvent) {
