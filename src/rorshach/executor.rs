@@ -4,9 +4,8 @@ use crate::rorshach::rule_parser::RuleParser;
 use crate::rorshach::producer::Producer;
 use crate::rorshach::consumer::Consumer;
 use hotwatch::Event as FileEvent;
-extern crate log;
 use log::info;
-extern crate pub_sub;
+use pub_sub::PubSub;
 use futures::{join, future::join_all, executor::block_on};
 
 pub struct Executor {
@@ -17,7 +16,7 @@ pub struct Executor {
 impl Executor {
 
     pub fn new(dir: String, rules: RuleParser) -> Self {
-        let channel = pub_sub::PubSub::new();
+        let channel = PubSub::new();
         let producer = Producer::new(channel.clone());
         let mut consumers = Vec::<Consumer>::new();
         for rule in rules.get_rules() {

@@ -1,14 +1,10 @@
-#[macro_use] extern crate clap;
-#[macro_use] extern crate strum_macros;
-extern crate csv;
-extern crate shellexpand;
-use clap::{App};
+use shellexpand;
+use clap::{App, load_yaml};
 use std::time::Duration;
 use hotwatch::blocking::{Flow, Hotwatch};
 use anyhow::{Context, Result};
 
-extern crate log;
-extern crate simple_logger;
+use simple_logger::init_with_level;
 use log::error;
 
 mod rorshach;
@@ -16,7 +12,7 @@ use crate::rorshach::rule_parser::RuleParser;
 use crate::rorshach::executor::Executor;
 
 fn main() -> Result<()> {
-    simple_logger::init_with_level(log::Level::Info).context("Failed to initliaze logger")?;
+    init_with_level(log::Level::Info).context("Failed to initliaze logger")?;
     let yaml = load_yaml!("cli.yml");
     let matches = App::from_yaml(yaml).get_matches();
     let default_config = &shellexpand::tilde("~/.rorshach.conf");

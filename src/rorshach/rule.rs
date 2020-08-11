@@ -11,7 +11,7 @@ pub struct Rule {
 
 impl fmt::Display for Rule {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} {} {}", self.event_type, self.file_pattern, self.cmd)
+        write!(f, "{:?} {:?} {:?}", self.event_type, self.file_pattern, self.cmd)
     }
 }
 

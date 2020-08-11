@@ -1,4 +1,4 @@
-extern crate strum;
+use strum_macros::{EnumString, Display};
 use serde::Deserialize;
 
 #[derive(Debug, PartialEq, Deserialize, Copy, Clone, EnumString, Display)]

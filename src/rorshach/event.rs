@@ -29,6 +29,6 @@ impl Event {
 
 impl fmt::Display for Event {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} {:?} {:?}", self.event_type, self.old_path, self.new_path)
+        write!(f, "{:?} {:?} {:?}", self.event_type, self.old_path, self.new_path)
     }
 }
